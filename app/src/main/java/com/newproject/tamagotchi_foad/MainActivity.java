@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         test.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
-                myRef.push().setValue(1);
+                myRef.push().setValue(2);
             }
         });
     }
