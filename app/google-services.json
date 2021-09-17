@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1056523651314",
+    "project_id": "tamagotchi-foad",
+    "storage_bucket": "tamagotchi-foad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1056523651314:android:88b4852b4d45e2b5cca86b",
+        "android_client_info": {
+          "package_name": "com.newproject.tamagotchi_foad"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1056523651314-964rrat5rl4qrdj94fm7nbq6f4slab5b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADvEDtQoe2H9eFtbsxRO5eVE_LlqCcmOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1056523651314-964rrat5rl4qrdj94fm7nbq6f4slab5b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
