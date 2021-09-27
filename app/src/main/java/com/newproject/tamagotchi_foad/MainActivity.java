@@ -15,18 +15,12 @@ public class MainActivity extends AppCompatActivity {
     private Button test;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("test");
+    //DatabaseReference myRef = database.getReference("test");
+    //myRef.push().setValue(2);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainlayout);
-        test = findViewById(R.id.test);
-        test.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                myRef.push().setValue(2);
-            }
-        });
     }
 }
