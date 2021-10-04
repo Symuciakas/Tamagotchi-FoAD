@@ -1,5 +1,8 @@
 package com.newproject.tamagotchi_foad;
 
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Pet class is for user Pet objects;
  * static data is received from PetData class;
@@ -25,9 +28,13 @@ public class Pet extends PetData {
         this.id = petData.id;
         this.name = petData.name;
         this.maxHealth = petData.maxHealth;
+        this.healthLoss = petData.healthLoss;
         this.maxHappiness = petData.maxHappiness;
+        this.happinessLoss = petData.happinessLoss;
         this.startingAffection = petData.startingAffection;
+        this.affectionLoss = petData.affectionLoss;
         this.maxSaturation = petData.maxSaturation;
+        this.saturationLoss = petData.saturationLoss;
 
         this.level = 0;
         this.experience = 0;
@@ -61,6 +68,10 @@ public class Pet extends PetData {
         return affection;
     }
 
+    public int getSaturation() {
+        return saturation;
+    }
+
     /**
      * Setters
      */
@@ -83,6 +94,10 @@ public class Pet extends PetData {
 
     public void setAffection(int affection) {
         this.affection = affection;
+    }
+
+    public void setSaturation(int saturation) {
+        this.saturation = saturation;
     }
 
     /**
