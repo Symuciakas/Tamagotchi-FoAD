@@ -28,7 +28,9 @@
     <LinearLayout
         android:id="@+id/foodLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        tools:ignore="MissingConstraints"
+        android:background="@color/white">
 
         <Button
             android:layout_width="100dp"
@@ -50,6 +52,20 @@
             android:layout_height="100dp"
             android:layout_margin="5dp" />
 
+    </LinearLayout>
+    
+    <LinearLayout
+        android:id="@+id/statLayout"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        tools:ignore="MissingConstraints"
+        android:background="@color/white">
+        <TextView
+            android:id="@+id/statTextView"
+            android:textSize="25sp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"/>
     </LinearLayout>
 
 
