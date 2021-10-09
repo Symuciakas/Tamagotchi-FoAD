@@ -32,25 +32,38 @@
         tools:ignore="MissingConstraints"
         android:background="@color/white">
 
-        <Button
+        <ImageView
+            android:id="@+id/foodImageView1"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_margin="5dp" />
+            android:layout_margin="5dp"
+            android:scaleType="fitCenter"
+            android:background="#00000000"
+            android:padding="20dp" />
 
-        <Button
+        <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_margin="5dp" />
+            android:layout_margin="5dp"
+            android:scaleType="fitCenter"
+            android:background="#00000000"
+            android:padding="20dp" />
 
-        <Button
+        <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_margin="5dp" />
+            android:scaleType="fitCenter"
+            android:layout_margin="5dp"
+            android:background="#00000000"
+            android:padding="20dp" />
 
-        <Button
+        <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_margin="5dp" />
+            android:layout_margin="5dp"
+            android:scaleType="fitCenter"
+            android:background="#00000000"
+            android:padding="20dp" />
 
     </LinearLayout>
     
