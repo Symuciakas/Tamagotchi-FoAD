@@ -1,13 +1,18 @@
 package com.newproject.tamagotchi_foad;
 
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,6 +30,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
+
+    Context mainContext;
 
     /**
      * Shared preferences
@@ -47,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     TextView testTextView, statTextView;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
+    ImageView foodView1;
 
     /**
      * TouchListeners
@@ -75,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mainContext = MainActivity.this;
 
         /**
          * Hide Action Bar and (maybe) Status Bar
@@ -107,11 +117,73 @@ public class MainActivity extends AppCompatActivity {
         statLayout.setX(screenWidth);
         statLayout.setY(0);
         statTextView = findViewById(R.id.statTextView);
+        foodView1 = findViewById(R.id.foodImageView1);
 
         /**
-         * Touch listener assignments
+         * Listener assignments
          */
         mainLayoutListener = new MainLayoutListener(mainLayout);
+        foodView1.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                ClipData.Item item = new ClipData.Item("Food");
+                String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_PLAIN};
+
+                ClipData dragData = new ClipData("Food",mimeTypes, item);
+                View.DragShadowBuilder myShadow = new View.DragShadowBuilder(foodView1);
+
+                foodView1.startDrag(dragData, myShadow, null, 0);
+
+                CloseFoodMenu();
+                return true;
+            }
+        });
+        foodView1.setImageResource(R.drawable.food);
+        foodView1.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch(event.getAction()) {
+                    case DragEvent.ACTION_DRAG_STARTED:
+                        //Nothing
+                        break;
+
+                    case DragEvent.ACTION_DRAG_ENTERED:
+                        //int x_cord = (int) event.getX();
+                        //int y_cord = (int) event.getY();
+                        break;
+
+                    case DragEvent.ACTION_DRAG_EXITED :
+                        //x_cord = (int) event.getX();
+                        //y_cord = (int) event.getY();
+                        break;
+
+                    case DragEvent.ACTION_DRAG_LOCATION  :
+                        //x_cord = (int) event.getX();
+                        //y_cord = (int) event.getY();
+                        break;
+
+                    case DragEvent.ACTION_DRAG_ENDED   :
+                        if(event.getX() > screenWidth/3 && event.getX() < screenWidth/1.5 && event.getY() > screenHeight/3 && event.getY() < screenHeight/1.5) {
+                            if(currentPet.getSaturation() < currentPet.getMaxSaturation())
+                                currentPet.setSaturation(currentPet.getSaturation() + 10);
+                            if(currentPet.getSaturation() > currentPet.getMaxSaturation())
+                                currentPet.setSaturation(currentPet.getMaxSaturation());
+                            //Food --;
+                            //Other stuff
+                        }
+                        //testTextView.setText(event.getX() + " " + event.getY() + "\n");
+                        // Do nothing
+                        break;
+
+                    case DragEvent.ACTION_DROP:
+                        //testTextView.setText("ACTION_DROP\n");
+                        // Do nothing
+                        break;
+                    default: break;
+                }
+                return true;
+            }
+        });
 
         /**
          * Shared preference initializing
@@ -241,15 +313,15 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Date now = Calendar.getInstance().getTime();
             long time = 0;
-            for(int i = Integer.parseInt(s.substring(0, 3)); i < now.getYear(); i++) {
+            for(int i = Integer.parseInt(s.substring(0, 4)); i < now.getYear(); i++) {
                 if (i % 4 == 0)
                     time = time + 366;
                 else
                     time = time + 365;
             }
-            if(Integer.parseInt(s.substring(0, 3))%4 == 0 && Integer.parseInt(s.substring(5, 6)) > 2)
+            if(Integer.parseInt(s.substring(0, 4))%4 == 0 && Integer.parseInt(s.substring(5, 7)) > 2)
                 time--;
-            switch (Integer.parseInt(s.substring(5, 6))) {
+            switch (Integer.parseInt(s.substring(5, 7))) {
                 case 2:
                     time = time - 31;
                     break;
@@ -289,46 +361,46 @@ public class MainActivity extends AppCompatActivity {
             if(now.getYear() % 4 == 0)
                 time++;
             switch (now.getMonth()) {
-                case 2:
+                case 1:
                     time = time + 31;
                     break;
-                case 3:
+                case 2:
                     time = time + 59;
                     break;
-                case 4:
+                case 3:
                     time = time + 90;
                     break;
-                case 5:
+                case 4:
                     time = time + 120;
                     break;
-                case 6:
+                case 5:
                     time = time + 151;
                     break;
-                case 7:
+                case 6:
                     time = time + 181;
                     break;
-                case 8:
+                case 7:
                     time = time + 212;
                     break;
-                case 9:
+                case 8:
                     time = time + 243;
                     break;
+                case 9:
+                    time = time + 273;
+                    break;
                 case 10:
-                    time = time - 273;
+                    time = time + 304;
                     break;
                 case 11:
-                    time = time - 304;
-                    break;
-                case 12:
-                    time = time - 334;
+                    time = time + 334;
                     break;
                 default:
                     break;
             }
-            time = (time - Integer.parseInt(s.substring(8, 9)) + now.getDay()) * 24;
-            time = (time - Integer.parseInt(s.substring(11, 12)) + now.getHours())*60;
-            time = (time - Integer.parseInt(s.substring(14, 15)) + now.getMinutes())*60;
-            time = (time - Integer.parseInt(s.substring(17, 18)) + now.getSeconds())*1000;
+            time = (time - Integer.parseInt(s.substring(8, 10)) + now.getDate()) * 24;
+            time = (time - Integer.parseInt(s.substring(11, 13)) + now.getHours())*60;
+            time = (time - Integer.parseInt(s.substring(14, 16)) + now.getMinutes())*60;
+            time = (time - Integer.parseInt(s.substring(17, 19)) + now.getSeconds())*1000;
             if(currentPet.getHealthLoss() != -1)
                 currentPet.setHealth(currentPet.getHealth() - (int)(time/currentPet.getHealthLoss()));
             if(currentPet.getHealth() <= 0)
@@ -349,7 +421,16 @@ public class MainActivity extends AppCompatActivity {
             setTimers((int)(time%currentPet.getHealthLoss()), (int)(time%currentPet.getHappinessLoss()), (int)(time%currentPet.getAffectionLoss()), (int)(time%currentPet.getSaturationLoss()));
         }
         displayPetData();
-        testTextView.setText("Done");
+    }
+
+    protected void CloseFoodMenu() {
+        foodLayout.setY(screenHeight);
+        bottomOpened = false;
+    }
+
+    protected void CloseStatMenu() {
+        statLayout.setX(screenWidth);
+        rightOpened = false;
     }
 
     // Pet touch could probably be implemented in a similar way, different function to overwrite
@@ -411,8 +492,6 @@ public class MainActivity extends AppCompatActivity {
                     return super.onScroll(e1, e2, distanceX, distanceY);
                 }
 
-
-
                 /**
                  * From contact to release
                  * @param e1 coordinates of touch
@@ -427,24 +506,12 @@ public class MainActivity extends AppCompatActivity {
                     float yDiff = e2.getY() - e1.getY();
                     try {
                         if(bottomOpened && foodLayout.getY() != screenHeight - foodLayout.getHeight()) {
-                            new Timer().schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    foodLayout.setY(screenHeight);
-                                    bottomOpened = false;
-                                }
-                            }, 100);
+                            CloseFoodMenu();
                             //!!! sometimes position bugs out. Adding delay lowers possibility
                             //!!! Small contact space to close. Add new similar gesture listener to foodLayout
                         }
                         if(rightOpened && statLayout.getX() != screenWidth - statLayout.getWidth()) {
-                            new Timer().schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    statLayout.setX(screenWidth);
-                                    rightOpened = false;
-                                }
-                            }, 100);
+                            CloseStatMenu();
                             //!!! Fling does not register sometimes
                             //!!! Small contact space to close. Add new similar gesture listener to foodLayout
                         }
