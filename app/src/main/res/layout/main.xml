@@ -18,67 +18,94 @@
 
     <ImageView
         android:id="@+id/petImageView"
+        android:layout_width="266dp"
+        android:layout_height="353dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_height="match_parent"
-        android:layout_width="match_parent" />
+        tools:srcCompat="@drawable/animal1" />
+
+    <ImageView
+        android:id="@+id/Background"
+        android:layout_width="418dp"
+        android:layout_height="737dp"
+        android:scaleType="fitXY"
+        android:scaleX="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@drawable/background1" />
 
     <LinearLayout
         android:id="@+id/foodLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:ignore="MissingConstraints"
-        android:background="@color/white">
+        android:background="@android:color/transparent"
+        tools:ignore="MissingConstraints">
 
         <ImageView
             android:id="@+id/foodImageView1"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_margin="5dp"
-            android:scaleType="fitCenter"
             android:background="#00000000"
-            android:padding="20dp" />
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            android:scaleX="1.5"
+            android:scaleY="1.5"
+            tools:srcCompat="@drawable/circle1" />
 
         <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_margin="5dp"
-            android:scaleType="fitCenter"
             android:background="#00000000"
-            android:padding="20dp" />
-
-        <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:padding="20dp"
             android:scaleType="fitCenter"
-            android:layout_margin="5dp"
-            android:background="#00000000"
-            android:padding="20dp" />
+            android:scaleX="1.5"
+            android:scaleY="1.5"
+            tools:srcCompat="@drawable/circle1" />
 
         <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_margin="5dp"
-            android:scaleType="fitCenter"
             android:background="#00000000"
-            android:padding="20dp" />
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            android:scaleX="1.5"
+            android:scaleY="1.5"
+            tools:srcCompat="@drawable/circle1" />
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_margin="5dp"
+            android:background="#00000000"
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            android:scaleX="1.5"
+            android:scaleY="1.5"
+            tools:srcCompat="@drawable/circle1" />
 
     </LinearLayout>
-    
+
     <LinearLayout
         android:id="@+id/statLayout"
         android:layout_width="300dp"
         android:layout_height="match_parent"
-        tools:ignore="MissingConstraints"
-        android:background="@color/white">
+        android:background="@color/purple_200"
+        tools:ignore="MissingConstraints">
+
         <TextView
             android:id="@+id/statTextView"
-            android:textSize="25sp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="10dp"/>
+            android:layout_margin="10dp"
+            android:textSize="25sp" />
+
     </LinearLayout>
 
 
