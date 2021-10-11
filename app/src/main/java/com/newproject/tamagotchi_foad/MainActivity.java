@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
                                 currentPet.setSaturation(currentPet.getMaxSaturation());
                             //Food --;
                             //Other stuff
+                            DisplayPetData();
                         }
                         //testTextView.setText(event.getX() + " " + event.getY() + "\n");
                         // Do nothing
@@ -209,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setHealth(currentPet.getHealth() - 1);
-                displayPetData();
+                DisplayPetData();
                 if(currentPet.getHealth() <= 0) {
                     currentPet.setHealth(0);
                     healthTimer.cancel();
@@ -220,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setHappiness(currentPet.getHappiness() - 1);
-                displayPetData();
+                DisplayPetData();
                 if(currentPet.getHappiness() <= 0) {
                     currentPet.setHappiness(0);
                     happinessTimer.cancel();
@@ -231,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setAffection(currentPet.getAffection() - 1);
-                displayPetData();
+                DisplayPetData();
                 if(currentPet.getAffection() <= 0) {
                     currentPet.setAffection(0);
                     affectionTimer.cancel();
@@ -242,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setSaturation(currentPet.getSaturation() - 1);
-                displayPetData();
+                DisplayPetData();
                 if(currentPet.getSaturation() <= 0) {
                     currentPet.setSaturation(0);
                     saturationTimer.cancel();
@@ -267,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Update pet stat textView
      */
-    protected void displayPetData() {
+    protected void DisplayPetData() {
         String s = "Id: " + currentPet.id +
                 "\nName: " + currentPet.name +
                 "\nLevel: " + currentPet.getLevel() + " " + currentPet.getExperience() +
@@ -285,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
      * @param nextAffection 1st delay for...
      * @param nextSaturation 1st...
      */
-    protected void setTimers(int nextHealth, int nextHappiness, int nextAffection, int nextSaturation) {
+    protected void SetTimers(int nextHealth, int nextHappiness, int nextAffection, int nextSaturation) {
         if(currentPet.getHealth() != 0) {
             if(currentPet.getHealthLoss() != -1) //Spec case: no health loss
                 healthTimer.scheduleAtFixedRate(healthDecrement, nextHealth, currentPet.getHealthLoss());
@@ -309,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
     protected void CheckDate() {
         String s = sharedPreferences.getString(LAST_TIME_ACTIVE, "First time?");
         if(s.equals("First time?")) {
-            setTimers(currentPet.getHealthLoss(), currentPet.getHappinessLoss(), currentPet.getAffectionLoss(), currentPet.getSaturationLoss());
+            SetTimers(currentPet.getHealthLoss(), currentPet.getHappinessLoss(), currentPet.getAffectionLoss(), currentPet.getSaturationLoss());
         } else {
             Date now = Calendar.getInstance().getTime();
             long time = 0;
@@ -418,9 +419,9 @@ public class MainActivity extends AppCompatActivity {
             currentPet.setSaturation(currentPet.getSaturation() - (int)(time/currentPet.getSaturationLoss()));
             if(currentPet.getSaturation() <= 0)
                 currentPet.setSaturation(0);
-            setTimers((int)(time%currentPet.getHealthLoss()), (int)(time%currentPet.getHappinessLoss()), (int)(time%currentPet.getAffectionLoss()), (int)(time%currentPet.getSaturationLoss()));
+            SetTimers((int)(time%currentPet.getHealthLoss()), (int)(time%currentPet.getHappinessLoss()), (int)(time%currentPet.getAffectionLoss()), (int)(time%currentPet.getSaturationLoss()));
         }
-        displayPetData();
+        DisplayPetData();
     }
 
     protected void CloseFoodMenu() {
