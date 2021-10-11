@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -15,6 +16,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -30,6 +32,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
+
+    /**
+     * Defense1
+     */
+    public int highScore, elapsedTime;
 
     Context mainContext;
 
@@ -54,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     TextView testTextView, statTextView;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
-    ImageView foodView1;
+    ImageView foodView1, petImageView, defenseView1;
 
     /**
      * TouchListeners
@@ -76,13 +83,19 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer;
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
 
     boolean bottomOpened = false, rightOpened = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        /**
+         * Defense1
+         */
+        highScore = 0;
+        elapsedTime = 0;
 
         mainContext = MainActivity.this;
 
@@ -118,11 +131,26 @@ public class MainActivity extends AppCompatActivity {
         statLayout.setY(0);
         statTextView = findViewById(R.id.statTextView);
         foodView1 = findViewById(R.id.foodImageView1);
+        defenseView1 = findViewById(R.id.foodImageView2);
+        petImageView = findViewById(R.id.petImageView);
 
+        defenseView1.setImageResource(R.drawable.food);
+        defenseView1.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                testTextView.setText(elapsedTime + " " + highScore);
+                Intent intent = new Intent(getBaseContext(), Highscore.class);
+                intent.putExtra("Time", elapsedTime);
+                intent.putExtra("Score", highScore);
+                startActivity(intent);
+                return false;
+            }
+        });
         /**
          * Listener assignments
          */
         mainLayoutListener = new MainLayoutListener(mainLayout);
+
         foodView1.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -139,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         foodView1.setImageResource(R.drawable.food);
+        petImageView.setImageResource(R.drawable.animal1);
         foodView1.setOnDragListener(new View.OnDragListener() {
             @Override
             public boolean onDrag(View v, DragEvent event) {
@@ -166,10 +195,14 @@ public class MainActivity extends AppCompatActivity {
                         if(event.getX() > screenWidth/3 && event.getX() < screenWidth/1.5 && event.getY() > screenHeight/3 && event.getY() < screenHeight/1.5) {
                             if(currentPet.getSaturation() < currentPet.getMaxSaturation())
                                 currentPet.setSaturation(currentPet.getSaturation() + 10);
+                            if(currentPet.getHealth() < currentPet.getMaxHealth())
+                                currentPet.setHealth(currentPet.getHealth() + 10);
                             if(currentPet.getSaturation() > currentPet.getMaxSaturation())
                                 currentPet.setSaturation(currentPet.getMaxSaturation());
+                            if(currentPet.getHealth() > currentPet.getMaxHealth())
+                                currentPet.setHealth(currentPet.getMaxHealth());
                             //Food --;
-                            //Other stuff
+                            highScore = highScore + 10;
                             DisplayPetData();
                         }
                         //testTextView.setText(event.getX() + " " + event.getY() + "\n");
@@ -196,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
         /**
          * Default pet data initializing
          */
-        petData = new PetData(0, "None", 100, -1, 100, 300000, 50, 3600000, 100, 300000);
+        petData = new PetData(0, "None", 100, 6000, 100, 300000, 50, 3600000, 100, 6000);
         currentPet = new Pet(petData);
 
         /**
@@ -206,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
         happinessTimer = new Timer();
         affectionTimer = new Timer();
         saturationTimer = new Timer();
+        elapsedTimeTimer = new Timer();
         healthDecrement = new TimerTask() {
             @Override
             public void run() {
@@ -252,6 +286,13 @@ public class MainActivity extends AppCompatActivity {
         };
 
         CheckDate();
+
+        elapsedTimeTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                elapsedTime++;
+            }
+        }, 0, 1000);
     }
 
     @Override
@@ -404,8 +445,10 @@ public class MainActivity extends AppCompatActivity {
             time = (time - Integer.parseInt(s.substring(17, 19)) + now.getSeconds())*1000;
             if(currentPet.getHealthLoss() != -1)
                 currentPet.setHealth(currentPet.getHealth() - (int)(time/currentPet.getHealthLoss()));
-            if(currentPet.getHealth() <= 0)
+            if(currentPet.getHealth() <= 0) {
                 currentPet.setHealth(0);
+                Toast.makeText(mainContext, "Ded", Toast.LENGTH_SHORT).show();
+            }
 
             //No exceptions
             currentPet.setHappiness(currentPet.getHappiness() - (int)(time/currentPet.getHappinessLoss()));
