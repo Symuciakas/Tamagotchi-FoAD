@@ -290,7 +290,8 @@ public class MainActivity extends AppCompatActivity {
         elapsedTimeTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                elapsedTime++;
+                if(currentPet.getHealth() != 0)
+                    elapsedTime++;
             }
         }, 0, 1000);
     }
@@ -443,11 +444,13 @@ public class MainActivity extends AppCompatActivity {
             time = (time - Integer.parseInt(s.substring(11, 13)) + now.getHours())*60;
             time = (time - Integer.parseInt(s.substring(14, 16)) + now.getMinutes())*60;
             time = (time - Integer.parseInt(s.substring(17, 19)) + now.getSeconds())*1000;
+            testTextView.setText(time + "");
             if(currentPet.getHealthLoss() != -1)
                 currentPet.setHealth(currentPet.getHealth() - (int)(time/currentPet.getHealthLoss()));
             if(currentPet.getHealth() <= 0) {
                 currentPet.setHealth(0);
                 Toast.makeText(mainContext, "Ded", Toast.LENGTH_SHORT).show();
+                finish();
             }
 
             //No exceptions
