@@ -1,69 +1,68 @@
 package com.newproject.tamagotchi_foad;
 
-public class Player {
-    private int uid; //Might become string
-    private String username;
-    private String password;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+import java.io.Serializable;
+
+@Entity(tableName = "Players")
+public class Player implements Serializable {
+    @PrimaryKey(autoGenerate = true)
+    private long uid;
+    @ColumnInfo(name = "Name")
     private String playerName;
+    @ColumnInfo(name = "Level")
     private int level;
+    @ColumnInfo(name = "Experience")
     private int experience;
+    @ColumnInfo(name = "Score")
     private int score;
-    private int petsGiven;
+    @ColumnInfo(name = "Play time")
+    private int playTime;
+    @ColumnInfo(name = "Given pat count")
+    private int patsGiven;
+    @ColumnInfo(name = "Fed food count")
     private int foodFed;
 
     /**
      * Constructors
      */
     public Player() {
-
-     }
-    public Player(int uid,  String username, String password, String playerName, int level, int experience, int score, int petsGiven, int foodFed) {
-         this.uid = uid;
-         this.username = username;
-         this.password = password;
-         this.playerName = playerName;
-         this.level = level;
-         this.experience = experience;
-         this.score = score;
-         this.petsGiven = petsGiven;
-         this.foodFed = foodFed;
-     }
-    public Player(int uid,  String username, String password, String playerName) {
-         this.uid = uid;
-         this.username = username;
-         this.password = password;
-         this.playerName = playerName;
-         this.level = 0;
-         this.experience = 0;
-         this.score = 0;
-         this.petsGiven = 0;
-         this.foodFed = 0;
-     }
-    public Player(String username, String password) {
-         //Generate?
-        this.uid = -1;
-        this.username = username;
-        this.password = password;
         this.playerName = "NULL";
         this.level = 0;
         this.experience = 0;
         this.score = 0;
-        this.petsGiven = 0;
+        this.patsGiven = 0;
         this.foodFed = 0;
-    }
+        this.playTime = 0;
+     }
+    public Player(long uid, String playerName, int level, int experience, int score, int playTime, int petsGiven, int foodFed) {
+         this.uid = uid;
+         this.playerName = playerName;
+         this.level = level;
+         this.experience = experience;
+         this.score = score;
+         this.playTime = playTime;
+         this.patsGiven = petsGiven;
+         this.foodFed = foodFed;
+     }
+    public Player(long uid, String playerName) {
+         this.uid = uid;
+         this.playerName = playerName;
+         this.level = 0;
+         this.experience = 0;
+         this.score = 0;
+         this.playTime = 0;
+         this.patsGiven = 0;
+         this.foodFed = 0;
+     }
 
     /**
      * Getters
      */
-    public int getUid() {
+    public long getUid() {
         return uid;
-    }
-    public String getUsername() {
-        return username;
-    }
-    public String getPassword() {
-        //Hash?
-        return password;
     }
     public String getPlayerName() {
         return playerName;
@@ -71,24 +70,50 @@ public class Player {
     public int getLevel() {
         return level;
     }
+    public int getExperience() {
+        return experience;
+    }
     public int getScore() {
         return score;
     }
-    public int getPetsGiven() {
-        return petsGiven;
+    public int getPlayTime() {
+        return playTime;
+    }
+    public int getPatsGiven() {
+        return patsGiven;
     }
     public int getFoodFed() {
         return foodFed;
     }
 
+
+
     /**
      * Setters
      */
+    public void setUid(long uid) {
+        this.uid = uid;
+    }
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
     }
+    public void setLevel(int level) {
+        this.level = level;
+    }
+    public void setExperience(int experience) {
+        this.experience = experience;
+    }
     public void setScore(int score) {
         this.score = score;
+    }
+    public void setPatsGiven(int patsGiven) {
+        this.patsGiven = patsGiven;
+    }
+    public void setFoodFed(int foodFed) {
+        this.foodFed = foodFed;
+    }
+    public void setPlayTime(int playTime) {
+        this.playTime = playTime;
     }
 
     /**
@@ -96,11 +121,20 @@ public class Player {
      */
     public void levelUp() {
         this.level++;
+        this.experience = 0;
+    }
+    public void addExperience(int exp) {
+        experience = experience + exp;
+        if(experience >= 100)
+            levelUp();
+    }
+    public void tickPlayTime() {
+        playTime++;
     }
     public void givePats() {
-        petsGiven++;
+        patsGiven++;
     }
-    public void feed() {
+    public void fed() {
         foodFed++;
     }
 }
