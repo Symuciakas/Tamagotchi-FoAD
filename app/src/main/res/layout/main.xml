@@ -58,6 +58,7 @@
             tools:srcCompat="@drawable/circle1" />
 
         <ImageView
+            android:id="@+id/foodImageView2"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_margin="5dp"

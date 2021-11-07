@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -15,15 +16,24 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
@@ -44,9 +54,17 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Firebase data
      */
-    //FirebaseDatabase database = FirebaseDatabase.getInstance();
-    //DatabaseReference myRef = database.getReference("test");
-    //myRef.push().setValue(2);
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference playersRef = database.getReference("players");
+    DatabaseReference playerRef = playersRef.child("01");
+
+    /**
+     * Local Room Database elements
+     */
+    List<Player> playerList = new ArrayList<>();
+    List<Pet> pets = new ArrayList<>();
+    List<PetData> petData = new ArrayList<>();
+    RoomDB roomDB;
 
     /**
      * UI elements
@@ -54,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     TextView testTextView, statTextView;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
-    ImageView foodView1;
+    ImageView foodView1, petImageView, defenseView1;
 
     /**
      * TouchListeners
@@ -70,14 +88,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Pet data and pet objects
      */
-    PetData petData;
     Pet currentPet;
 
     /**
      * Decrement timers and tasks
      */
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer;
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
+
+    Player player;
 
     boolean bottomOpened = false, rightOpened = false;
     @Override
@@ -118,6 +137,8 @@ public class MainActivity extends AppCompatActivity {
         statLayout.setY(0);
         statTextView = findViewById(R.id.statTextView);
         foodView1 = findViewById(R.id.foodImageView1);
+        defenseView1 = findViewById(R.id.foodImageView2);
+        petImageView = findViewById(R.id.petImageView);
 
         /**
          * Listener assignments
@@ -139,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         foodView1.setImageResource(R.drawable.food);
+        petImageView.setImageResource(R.drawable.animal1);
         foodView1.setOnDragListener(new View.OnDragListener() {
             @Override
             public boolean onDrag(View v, DragEvent event) {
@@ -164,12 +186,22 @@ public class MainActivity extends AppCompatActivity {
 
                     case DragEvent.ACTION_DRAG_ENDED   :
                         if(event.getX() > screenWidth/3 && event.getX() < screenWidth/1.5 && event.getY() > screenHeight/3 && event.getY() < screenHeight/1.5) {
+                            if(currentPet.getHealth() == 0)
+                                SetHealthTimer(currentPet.getHealthLoss());
+                            if(currentPet.getSaturation() == 0)
+                                SetSaturationTimer(currentPet.getSaturationLoss());
                             if(currentPet.getSaturation() < currentPet.getMaxSaturation())
                                 currentPet.setSaturation(currentPet.getSaturation() + 10);
+                            if(currentPet.getHealth() < currentPet.getMaxHealth())
+                                currentPet.setHealth(currentPet.getHealth() + 10);
                             if(currentPet.getSaturation() > currentPet.getMaxSaturation())
                                 currentPet.setSaturation(currentPet.getMaxSaturation());
+                            if(currentPet.getHealth() > currentPet.getMaxHealth())
+                                currentPet.setHealth(currentPet.getMaxHealth());
+                            player.fed();
+                            player.addExperience(10);
                             //Food --;
-                            //Other stuff
+                            DisplayData();
                         }
                         //testTextView.setText(event.getX() + " " + event.getY() + "\n");
                         // Do nothing
@@ -190,13 +222,11 @@ public class MainActivity extends AppCompatActivity {
          */
         sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
-        //testTextView.setText(sharedPreferences.getString(LAST_TIME_ACTIVE, "First time?") + "\n" + Calendar.getInstance().getTime().toString());
 
         /**
-         * Default pet data initializing
+         * Local Room Database initializing
          */
-        petData = new PetData(0, "None", 100, -1, 100, 300000, 50, 3600000, 100, 300000);
-        currentPet = new Pet(petData);
+        roomDB = RoomDB.getInstance(mainContext);
 
         /**
          * Decrement timer and task initializing
@@ -205,11 +235,12 @@ public class MainActivity extends AppCompatActivity {
         happinessTimer = new Timer();
         affectionTimer = new Timer();
         saturationTimer = new Timer();
+        elapsedTimeTimer = new Timer();
         healthDecrement = new TimerTask() {
             @Override
             public void run() {
                 currentPet.setHealth(currentPet.getHealth() - 1);
-                displayPetData();
+                DisplayData();
                 if(currentPet.getHealth() <= 0) {
                     currentPet.setHealth(0);
                     healthTimer.cancel();
@@ -220,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setHappiness(currentPet.getHappiness() - 1);
-                displayPetData();
+                DisplayData();
                 if(currentPet.getHappiness() <= 0) {
                     currentPet.setHappiness(0);
                     happinessTimer.cancel();
@@ -231,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setAffection(currentPet.getAffection() - 1);
-                displayPetData();
+                DisplayData();
                 if(currentPet.getAffection() <= 0) {
                     currentPet.setAffection(0);
                     affectionTimer.cancel();
@@ -242,33 +273,57 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 currentPet.setSaturation(currentPet.getSaturation() - 1);
-                displayPetData();
+                DisplayData();
                 if(currentPet.getSaturation() <= 0) {
                     currentPet.setSaturation(0);
                     saturationTimer.cancel();
                 }
             }
         };
+        elapsedTimeTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if(player != null) {
+                    player.tickPlayTime();
+                    DisplayData();
+                    //roomDB.playerDAO().updatePlayTime(1, 0);
+                    //roomDB.playerDAO().updatePlayTime(1, player.getPlayTime());
+                }
+            }
+        }, 0, 1000);
 
+        RecoverPlayerData();
         CheckDate();
+        //playerRef.push().getKey();
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
         //Date save for decrementing at start
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String currentDateAndTime = sdf.format(new Date());
         editor.putString(LAST_TIME_ACTIVE, currentDateAndTime);
         editor.commit();
 
-        super.onDestroy();
+        roomDB.playerDAO().update(player.getUid(), player.getPlayerName(), player.getLevel(), player.getExperience(), player.getScore(), player.getPlayTime(), player.getPatsGiven(), player.getFoodFed());
+        roomDB.petDAO().update(currentPet.getUid(), currentPet.getLevel(), currentPet.getExperience(), currentPet.getAffection(), currentPet.getHealth(), currentPet.getHappiness(), currentPet.getSaturation());
+
+        SaveToFirebase();
+
+        //ResetPlayerData();
+
+        super.onStop();
     }
 
     /**
      * Update pet stat textView
      */
-    protected void displayPetData() {
-        String s = "Id: " + currentPet.id +
+    protected void DisplayData() {
+        SaveToFirebase();
+        String s = player.getUid() + player.getPlayerName() +
+                "\n" + player.getLevel() + " " + player.getExperience() +
+                "/100\n" + player.getPlayTime() + "sec.\n" +
+                "Id: " + currentPet.uid +
                 "\nName: " + currentPet.name +
                 "\nLevel: " + currentPet.getLevel() + " " + currentPet.getExperience() +
                 "/100\nAffection: " + currentPet.getAffection() +
@@ -285,19 +340,50 @@ public class MainActivity extends AppCompatActivity {
      * @param nextAffection 1st delay for...
      * @param nextSaturation 1st...
      */
-    protected void setTimers(int nextHealth, int nextHappiness, int nextAffection, int nextSaturation) {
+    protected void SetTimers(int nextHealth, int nextHappiness, int nextAffection, int nextSaturation) {
         if(currentPet.getHealth() != 0) {
             if(currentPet.getHealthLoss() != -1) //Spec case: no health loss
                 healthTimer.scheduleAtFixedRate(healthDecrement, nextHealth, currentPet.getHealthLoss());
         }
         if(currentPet.getHappiness() != 0) {
-            happinessTimer.scheduleAtFixedRate(happinessDecrement, nextHappiness, currentPet.getHappinessLoss());
+            if(currentPet.getHappinessLoss() != -1) //Spec case: no happiness loss
+                happinessTimer.scheduleAtFixedRate(happinessDecrement, nextHappiness, currentPet.getHappinessLoss());
         }
         if(currentPet.getAffection() != 0) {
-            affectionTimer.scheduleAtFixedRate(affectionDecrement, nextAffection, currentPet.getAffectionLoss());
+            if(currentPet.getAffectionLoss() != -1) //Spec case: no affection loss
+                affectionTimer.scheduleAtFixedRate(affectionDecrement, nextAffection, currentPet.getAffectionLoss());
         }
         if(currentPet.getSaturation() != 0) {
-            saturationTimer.scheduleAtFixedRate(saturationDecrement, nextSaturation, currentPet.getSaturationLoss());
+            if(currentPet.getSaturationLoss() != -1) //Spec case: no saturation loss
+                saturationTimer.scheduleAtFixedRate(saturationDecrement, nextSaturation, currentPet.getSaturationLoss());
+        }
+    }
+
+    protected void SetHealthTimer(int nextHealth) {
+        if(currentPet.getHealth() != 0) {
+            if(currentPet.getHealthLoss() != -1) //Spec case: no health loss
+                healthTimer.scheduleAtFixedRate(healthDecrement, nextHealth, currentPet.getHealthLoss());
+        }
+    }
+
+    protected void SetHappinessTimer(int nextHappiness) {
+        if(currentPet.getHappiness() != 0) {
+            if(currentPet.getHappinessLoss() != -1) //Spec case: no happiness loss
+                happinessTimer.scheduleAtFixedRate(happinessDecrement, nextHappiness, currentPet.getHappinessLoss());
+        }
+    }
+
+    protected void SetAffectionTimer(int nextAffection) {
+        if(currentPet.getAffection() != 0) {
+            if(currentPet.getAffectionLoss() != -1) //Spec case: no affection loss
+                affectionTimer.scheduleAtFixedRate(affectionDecrement, nextAffection, currentPet.getAffectionLoss());
+        }
+    }
+
+    protected void SetSaturationTimer(int nextSaturation) {
+        if(currentPet.getSaturation() != 0) {
+            if(currentPet.getSaturationLoss() != -1) //Spec case: no saturation loss
+                saturationTimer.scheduleAtFixedRate(saturationDecrement, nextSaturation, currentPet.getSaturationLoss());
         }
     }
 
@@ -309,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
     protected void CheckDate() {
         String s = sharedPreferences.getString(LAST_TIME_ACTIVE, "First time?");
         if(s.equals("First time?")) {
-            setTimers(currentPet.getHealthLoss(), currentPet.getHappinessLoss(), currentPet.getAffectionLoss(), currentPet.getSaturationLoss());
+            SetTimers(currentPet.getHealthLoss(), currentPet.getHappinessLoss(), currentPet.getAffectionLoss(), currentPet.getSaturationLoss());
         } else {
             Date now = Calendar.getInstance().getTime();
             long time = 0;
@@ -401,26 +487,37 @@ public class MainActivity extends AppCompatActivity {
             time = (time - Integer.parseInt(s.substring(11, 13)) + now.getHours())*60;
             time = (time - Integer.parseInt(s.substring(14, 16)) + now.getMinutes())*60;
             time = (time - Integer.parseInt(s.substring(17, 19)) + now.getSeconds())*1000;
-            if(currentPet.getHealthLoss() != -1)
+            //player.setPlayTime(player.getPlayTime() + (int)time/1000); // Only when player is active
+            if(currentPet.getHealthLoss() != -1) {
                 currentPet.setHealth(currentPet.getHealth() - (int)(time/currentPet.getHealthLoss()));
-            if(currentPet.getHealth() <= 0)
-                currentPet.setHealth(0);
+                if(currentPet.getHealth() <= 0)
+                    currentPet.setHealth(0);
+            }
 
             //No exceptions
-            currentPet.setHappiness(currentPet.getHappiness() - (int)(time/currentPet.getHappinessLoss()));
-            if(currentPet.getHappiness() <= 0)
-                currentPet.setHappiness(0);
+            if(currentPet.getHappinessLoss() != -1) {
+                currentPet.setHappiness(currentPet.getHappiness() - (int) (time / currentPet.getHappinessLoss()));
+                if (currentPet.getHappiness() <= 0)
+                    currentPet.setHappiness(0);
+            }
 
-            currentPet.setAffection(currentPet.getAffection() - (int)(time/currentPet.getAffectionLoss()));
-            if(currentPet.getAffection() <= 0)
-                currentPet.setAffection(0);
+            if(currentPet.getAffectionLoss() != -1) {
+                currentPet.setAffection(currentPet.getAffection() - (int) (time / currentPet.getAffectionLoss()));
+                if (currentPet.getAffection() <= 0)
+                    currentPet.setAffection(0);
+            }
 
-            currentPet.setSaturation(currentPet.getSaturation() - (int)(time/currentPet.getSaturationLoss()));
-            if(currentPet.getSaturation() <= 0)
-                currentPet.setSaturation(0);
-            setTimers((int)(time%currentPet.getHealthLoss()), (int)(time%currentPet.getHappinessLoss()), (int)(time%currentPet.getAffectionLoss()), (int)(time%currentPet.getSaturationLoss()));
+            if(currentPet.getSaturationLoss() != -1) {
+                currentPet.setSaturation(currentPet.getSaturation() - (int) (time / currentPet.getSaturationLoss()));
+                if (currentPet.getSaturation() <= 0)
+                    currentPet.setSaturation(0);
+            }
+            SetTimers(currentPet.getHealthLoss() - (int)(time%currentPet.getHealthLoss()),
+                    currentPet.getHappinessLoss() - (int)(time%currentPet.getHappinessLoss()),
+                    currentPet.getAffectionLoss() - (int)(time%currentPet.getAffectionLoss()),
+                    currentPet.getSaturationLoss() - (int)(time%currentPet.getSaturationLoss()));
         }
-        displayPetData();
+        DisplayData();
     }
 
     protected void CloseFoodMenu() {
@@ -431,6 +528,74 @@ public class MainActivity extends AppCompatActivity {
     protected void CloseStatMenu() {
         statLayout.setX(screenWidth);
         rightOpened = false;
+    }
+
+    protected void RecoverPlayerData() {
+        /**
+         * Try Firebase recovery
+         */
+        playerRef.child("Player Data").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                player = dataSnapshot.getValue(Player.class);
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+            }
+        });
+        playerRef.child("Pet Data").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                currentPet = dataSnapshot.getValue(Pet.class);
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+            }
+        });
+
+        if(roomDB.playerDAO().getAll().size() == 0) {
+            if(player == null) {
+                /**
+                 * Default player initializing
+                 */
+                player = new Player();
+                roomDB.playerDAO().insert(player);
+                playerList = roomDB.playerDAO().getAll();
+
+                /**
+                 * Default pet data initializing
+                 */
+                petData.add(new PetData(0, "None", 100, -1, 100, 300000, 50, 7200000, 100, 300000));
+                roomDB.petDataDAO().insert(petData.get(0));
+                currentPet = new Pet(petData.get(0));
+                roomDB.petDAO().insert(currentPet);
+
+            }
+        } else {
+            /**
+             * Recover data
+             */
+            player = roomDB.playerDAO().getAll().get(0);
+            petData = roomDB.petDataDAO().getAll();
+            currentPet = roomDB.petDAO().getAll().get(0);
+        }
+        SaveToFirebase();
+    }
+
+    protected void ResetPlayerData() {
+        roomDB.playerDAO().reset(roomDB.playerDAO().getAll());
+        roomDB.petDataDAO().reset(roomDB.petDataDAO().getAll());
+        roomDB.petDAO().reset(roomDB.petDAO().getAll());
+
+        editor.putString(LAST_TIME_ACTIVE, null);
+        editor.commit();
+    }
+
+    protected void SaveToFirebase() {
+        playerRef.child("Player Data").setValue(player);
+        playerRef.child("Pet Data").setValue(currentPet);
     }
 
     // Pet touch could probably be implemented in a similar way, different function to overwrite
