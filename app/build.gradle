@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId "com.newproject.tamagotchi_foad"
-        minSdkVersion 21
+        minSdkVersion 26
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
