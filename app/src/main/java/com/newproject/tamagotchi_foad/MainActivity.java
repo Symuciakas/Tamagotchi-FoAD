@@ -1,12 +1,18 @@
 package com.newproject.tamagotchi_foad;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
+import android.app.ApplicationErrorReport;
+import android.app.NotificationChannel;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.DragEvent;
 import android.view.GestureDetector;
@@ -20,6 +26,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.database.DataSnapshot;
@@ -48,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public static final String SHARED_PREFERENCES = "sharedPreferences";// General app code
     public static final String LAST_TIME_ACTIVE = "lastTimeActive";// Time when user last exited the app
+    public static final String NOTIFICATION_ID = "notificationID";
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
 
@@ -72,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     TextView testTextView, statTextView;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
-    ImageView foodView1, petImageView, defenseView1;
+    ImageView foodView1, foodView2, petImageView;
 
     /**
      * TouchListeners
@@ -96,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
     Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
 
+    /**
+     * Notification variable declaration
+     */
+    private NotificationManagerCompat notificationManagerCompat;
+    private int notificationId = 0;
+    private String notificationChannelId;
+
     Player player;
 
     boolean bottomOpened = false, rightOpened = false;
@@ -104,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         mainContext = MainActivity.this;
+
+        stopService(new Intent(mainContext, NotificationService.class));
 
         /**
          * Hide Action Bar and (maybe) Status Bar
@@ -137,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         statLayout.setY(0);
         statTextView = findViewById(R.id.statTextView);
         foodView1 = findViewById(R.id.foodImageView1);
-        defenseView1 = findViewById(R.id.foodImageView2);
+        foodView2 = findViewById(R.id.foodImageView2);
         petImageView = findViewById(R.id.petImageView);
 
         /**
@@ -292,27 +310,59 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 0, 1000);
 
+        /**
+         * Notification data
+
+        notificationChannelId = "channel1";
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel= new NotificationChannel(notificationChannelId, notificationChannelId, NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+        notificationManagerCompat = NotificationManagerCompat.from(this);*/
+
+        LoadPrefData();
         RecoverPlayerData();
         CheckDate();
-        //playerRef.push().getKey();
     }
 
     @Override
     protected void onStop() {
-        //Date save for decrementing at start
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        String currentDateAndTime = sdf.format(new Date());
-        editor.putString(LAST_TIME_ACTIVE, currentDateAndTime);
-        editor.commit();
+        SavePrefData();
 
         roomDB.playerDAO().update(player.getUid(), player.getPlayerName(), player.getLevel(), player.getExperience(), player.getScore(), player.getPlayTime(), player.getPatsGiven(), player.getFoodFed());
         roomDB.petDAO().update(currentPet.getUid(), currentPet.getLevel(), currentPet.getExperience(), currentPet.getAffection(), currentPet.getHealth(), currentPet.getHappiness(), currentPet.getSaturation());
 
         SaveToFirebase();
 
+        Intent notificationServiceIntent = new Intent(mainContext, NotificationService.class);
+
+        notificationServiceIntent.putExtra("Health", currentPet.getHealth());
+        notificationServiceIntent.putExtra("Happiness", currentPet.getHappiness());
+        notificationServiceIntent.putExtra("Affection", currentPet.getAffection());
+        notificationServiceIntent.putExtra("Saturation", currentPet.getSaturation());
+
+        notificationServiceIntent.putExtra("Health decrement", currentPet.getHealthLoss());
+        notificationServiceIntent.putExtra("Happiness decrement", currentPet.getHappinessLoss());
+        notificationServiceIntent.putExtra("Affection decrement", currentPet.getAffectionLoss());
+        notificationServiceIntent.putExtra("Saturation decrement", currentPet.getSaturationLoss());
+
+        getApplicationContext().startForegroundService(notificationServiceIntent);
+
         //ResetPlayerData();
 
         super.onStop();
+    }
+
+    /**
+     * Save Pref data
+     */
+    protected void SavePrefData() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        String currentDateAndTime = sdf.format(new Date());
+        editor.putString(LAST_TIME_ACTIVE, currentDateAndTime);
+        //editor.putInt(NOTIFICATION_ID, notificationId);
+        editor.commit();
     }
 
     /**
@@ -531,9 +581,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void RecoverPlayerData() {
-        /**
-         * Try Firebase recovery
-         */
         playerRef.child("Player Data").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -590,7 +637,12 @@ public class MainActivity extends AppCompatActivity {
         roomDB.petDAO().reset(roomDB.petDAO().getAll());
 
         editor.putString(LAST_TIME_ACTIVE, null);
+        editor.putInt(NOTIFICATION_ID, 0);
         editor.commit();
+    }
+
+    protected void LoadPrefData() {
+        notificationId = sharedPreferences.getInt(NOTIFICATION_ID, 0);
     }
 
     protected void SaveToFirebase() {
