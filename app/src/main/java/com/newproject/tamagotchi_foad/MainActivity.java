@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.health.HealthStats;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.DragEvent;
@@ -102,8 +103,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
-    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer, happinessIncreaseTimer; // added last
+    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement, happinessIncrease;
 
     /**
      * Notification variable declaration
@@ -235,6 +236,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageView petImg = (ImageView) findViewById(R.id.petImageView);
+        petImg.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (currentPet.getHealth() > 0) {
+                    currentPet.setHealth(currentPet.getHealth() - 5);
+                    DisplayData();
+                }
+            }
+        });
+// pet the pet task listener
+//        petImg.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                boolean isCancelled = true;
+//                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+//                    // start your timer
+//                    happinessIncreaseTimer.scheduleAtFixedRate(happinessIncrease, 0, 5000);
+//                    isCancelled = true;
+//                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+//                    // stop your timer.
+//                    if (isCancelled){
+//                        happinessIncreaseTimer.cancel();
+//                        isCancelled = false;
+//                    }
+//                }
+//                return false;
+//            }
+//        });
         /**
          * Shared preference initializing
          */
@@ -254,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
         affectionTimer = new Timer();
         saturationTimer = new Timer();
         elapsedTimeTimer = new Timer();
+        happinessIncreaseTimer = new Timer(); // pet the pet task
         healthDecrement = new TimerTask() {
             @Override
             public void run() {
@@ -309,6 +339,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }, 0, 1000);
+        // pet the pet task timer
+        happinessIncrease = new TimerTask() {
+            @Override
+            public void run() {
+                currentPet.setHappiness(currentPet.getHappiness() - 1);
+                DisplayData();
+            }
+        };
 
         /**
          * Notification data
@@ -747,4 +785,5 @@ public class MainActivity extends AppCompatActivity {
             return gestureDetector.onTouchEvent(event);
         }
     }
+
 }
