@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.health.HealthStats;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.DragEvent;
@@ -102,13 +103,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
-<<<<<<< Updated upstream
     Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
-=======
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer; // added last
-    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement, happinessIncrease;
->>>>>>> Stashed changes
 
     /**
      * Notification variable declaration
@@ -240,9 +236,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-<<<<<<< Updated upstream
-=======
         ImageView petImg = (ImageView) findViewById(R.id.petImageView);
         petImg.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -252,7 +245,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         petImg.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -274,7 +266,6 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
->>>>>>> Stashed changes
         /**
          * Shared preference initializing
          */
@@ -294,6 +285,7 @@ public class MainActivity extends AppCompatActivity {
         affectionTimer = new Timer();
         saturationTimer = new Timer();
         elapsedTimeTimer = new Timer();
+        happinessIncreaseTimer = new Timer(); // pet the pet task
         healthDecrement = new TimerTask() {
             @Override
             public void run() {
@@ -349,6 +341,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }, 0, 1000);
+        // pet the pet task timer
+        happinessIncrease = new TimerTask() {
+            @Override
+            public void run() {
+                currentPet.setHappiness(currentPet.getHappiness() - 1);
+                DisplayData();
+            }
+        };
 
         /**
          * Notification data
@@ -787,4 +787,5 @@ public class MainActivity extends AppCompatActivity {
             return gestureDetector.onTouchEvent(event);
         }
     }
+
 }
