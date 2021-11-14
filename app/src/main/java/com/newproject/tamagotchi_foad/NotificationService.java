@@ -45,7 +45,6 @@ public class NotificationService extends Service {
     MediaPlayer mediaPlayer;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         if (Build.VERSION.SDK_INT >= 26) {
             String CHANNEL_ID = "my_channel_01";
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -101,7 +100,7 @@ public class NotificationService extends Service {
             healthTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    SendNotification("", "");
+                    SendNotification("Health is low", "Your pet is dying!");
                 }
             }, (int)(healthDecrement * health * 0.94));
         }
@@ -109,7 +108,7 @@ public class NotificationService extends Service {
             happinessTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    SendNotification("", "");
+                    SendNotification("Happiness is low", "Your pet is sad");
                 }
             }, (int)(happinessDecrement * happiness * 0.94));
         }
@@ -117,7 +116,7 @@ public class NotificationService extends Service {
             affectionTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    SendNotification("", "");
+                    SendNotification("Affection is low", "Your pet hates you");
                 }
             }, (int)(affectionDecrement * affection * 0.94));
         }
@@ -125,7 +124,7 @@ public class NotificationService extends Service {
             saturationTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    SendNotification("", "");
+                    SendNotification("Saturation is low", "Your pet is getting hungry");
                 }
             }, (int)(saturationDecrement * saturation * 0.94));
         }
