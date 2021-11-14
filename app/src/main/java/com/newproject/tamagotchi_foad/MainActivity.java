@@ -102,8 +102,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
+<<<<<<< Updated upstream
     Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
+=======
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer; // added last
+    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement, happinessIncrease;
+>>>>>>> Stashed changes
 
     /**
      * Notification variable declaration
@@ -115,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     Player player;
 
     boolean bottomOpened = false, rightOpened = false;
+    Timer happinessIncreaseTimer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -235,6 +241,40 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+<<<<<<< Updated upstream
+=======
+        ImageView petImg = (ImageView) findViewById(R.id.petImageView);
+        petImg.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (currentPet.getHealth() > 0) {
+                    currentPet.setHealth(currentPet.getHealth() - 5);
+                    DisplayData();
+                }
+            }
+        });
+
+        petImg.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    // start your timer
+                        happinessIncreaseTimer = new Timer();
+                        happinessIncreaseTimer.scheduleAtFixedRate(new TimerTask() {
+                            @Override
+                            public void run() {
+                                currentPet.setHappiness(currentPet.getHappiness() - 1);
+                                DisplayData();
+                            }
+                        }, 2000, 3000);
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // stop your timer.
+                    happinessIncreaseTimer.cancel();
+                }
+                return false;
+            }
+        });
+>>>>>>> Stashed changes
         /**
          * Shared preference initializing
          */
