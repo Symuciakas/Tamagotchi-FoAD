@@ -103,8 +103,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer, happinessIncreaseTimer; // added last
-    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement, happinessIncrease;
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
+    TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
 
     /**
      * Notification variable declaration
@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
     Player player;
 
     boolean bottomOpened = false, rightOpened = false;
+    Timer happinessIncreaseTimer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -235,7 +236,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
         ImageView petImg = (ImageView) findViewById(R.id.petImageView);
         petImg.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -245,25 +245,27 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-// pet the pet task listener
-//        petImg.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                boolean isCancelled = true;
-//                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-//                    // start your timer
-//                    happinessIncreaseTimer.scheduleAtFixedRate(happinessIncrease, 0, 5000);
-//                    isCancelled = true;
-//                } else if (event.getAction() == MotionEvent.ACTION_UP) {
-//                    // stop your timer.
-//                    if (isCancelled){
-//                        happinessIncreaseTimer.cancel();
-//                        isCancelled = false;
-//                    }
-//                }
-//                return false;
-//            }
-//        });
+        petImg.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    // start your timer
+                        happinessIncreaseTimer = new Timer();
+                        happinessIncreaseTimer.scheduleAtFixedRate(new TimerTask() {
+                            @Override
+                            public void run() {
+                                currentPet.setHappiness(currentPet.getHappiness() - 1);
+                                DisplayData();
+                            }
+                        }, 2000, 3000);
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // stop your timer.
+                    happinessIncreaseTimer.cancel();
+                }
+                return false;
+            }
+        });
         /**
          * Shared preference initializing
          */
@@ -340,13 +342,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 0, 1000);
         // pet the pet task timer
-        happinessIncrease = new TimerTask() {
-            @Override
-            public void run() {
-                currentPet.setHappiness(currentPet.getHappiness() - 1);
-                DisplayData();
-            }
-        };
 
         /**
          * Notification data
@@ -746,35 +741,6 @@ public class MainActivity extends AppCompatActivity {
 
                     return super.onScroll(e1, e2, distanceX, distanceY);
                 }
-
-                /**
-                 * From contact to release
-                 * @param e1 coordinates of touch
-                 * @param e2 coordinates of release
-                 * @param velocityX at point of release i think
-                 * @param velocityY at point of release i think
-                 * @return false
-                 */
-                @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                    float xDiff = e2.getX() - e1.getX();
-                    float yDiff = e2.getY() - e1.getY();
-                    try {
-                        if(bottomOpened && foodLayout.getY() != screenHeight - foodLayout.getHeight()) {
-                            CloseFoodMenu();
-                            //!!! sometimes position bugs out. Adding delay lowers possibility
-                            //!!! Small contact space to close. Add new similar gesture listener to foodLayout
-                        }
-                        if(rightOpened && statLayout.getX() != screenWidth - statLayout.getWidth()) {
-                            CloseStatMenu();
-                            //!!! Fling does not register sometimes
-                            //!!! Small contact space to close. Add new similar gesture listener to foodLayout
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    return false;
-                }
             };
             gestureDetector = new GestureDetector(listener);
             v.setOnTouchListener(this);
@@ -782,8 +748,19 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
+            if(event.getAction() == MotionEvent.ACTION_UP) {
+                if(bottomOpened && foodLayout.getY() != screenHeight - foodLayout.getHeight()) {
+                    CloseFoodMenu();
+                    //!!! sometimes position bugs out. Adding delay lowers possibility
+                    //!!! Small contact space to close. Add new similar gesture listener to foodLayout
+                }
+                if(rightOpened && statLayout.getX() != screenWidth - statLayout.getWidth()) {
+                    CloseStatMenu();
+                    //!!! Fling does not register sometimes
+                    //!!! Small contact space to close. Add new similar gesture listener to foodLayout
+                }
+            }
             return gestureDetector.onTouchEvent(event);
         }
     }
-
 }
