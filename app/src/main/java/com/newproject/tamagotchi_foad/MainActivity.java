@@ -10,6 +10,10 @@ import android.content.ClipDescription;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.health.HealthStats;
@@ -47,8 +51,9 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     Context mainContext;
 
@@ -103,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Decrement timers and tasks
      */
-    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer;
+    Timer healthTimer, happinessTimer, affectionTimer, saturationTimer, elapsedTimeTimer, happinessIncreaseTimer, tenthOfSecondTimer;
     TimerTask healthDecrement, happinessDecrement, affectionDecrement, saturationDecrement;
 
     /**
@@ -113,10 +118,21 @@ public class MainActivity extends AppCompatActivity {
     private int notificationId = 0;
     private String notificationChannelId;
 
+    //Sensors
+    /**
+     * Sensor variable declaration
+     */
+    private SensorManager sensorManager;
+    private List<Sensor> deviceSensors;
+    private float[] accelerationVector3;
+    private float[] speedVector3;
+    private float[] distanceVector3;
+    private float[] resistanceForceVector3;
+    private static float resistanceK = 0.48f;
+
     Player player;
 
     boolean bottomOpened = false, rightOpened = false;
-    Timer happinessIncreaseTimer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -205,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case DragEvent.ACTION_DRAG_ENDED   :
-                        if(event.getX() > screenWidth/3 && event.getX() < screenWidth/1.5 && event.getY() > screenHeight/3 && event.getY() < screenHeight/1.5) {
+                        if(event.getX() > petImageView.getX() && event.getX() < petImageView.getX()+petImageView.getWidth() && event.getY() > petImageView.getY() && event.getY() < petImageView.getY()+petImageView.getHeight()) {
                             if(currentPet.getHealth() == 0)
                                 SetHealthTimer(currentPet.getHealthLoss());
                             if(currentPet.getSaturation() == 0)
@@ -286,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
         saturationTimer = new Timer();
         elapsedTimeTimer = new Timer();
         happinessIncreaseTimer = new Timer(); // pet the pet task
+        tenthOfSecondTimer = new Timer();
         healthDecrement = new TimerTask() {
             @Override
             public void run() {
@@ -335,24 +352,61 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if(player != null) {
                     player.tickPlayTime();
-                    DisplayData();
+
+                    DisplayData();//Works on emulators. Broken on phones
                     //roomDB.playerDAO().updatePlayTime(1, 0);
                     //roomDB.playerDAO().updatePlayTime(1, player.getPlayTime());
                 }
             }
         }, 0, 1000);
+        accelerationVector3 = new float[]{0, 0, 0};
+        distanceVector3 = new float[]{0, 0, 0};
+        speedVector3 = new float[]{0, 0, 0};
+        resistanceForceVector3 = new float[]{0, 0, 0};
+        tenthOfSecondTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                for(int i = 0; i < 3; i++) {
+                    speedVector3[i] = speedVector3[i] + -Math.signum(accelerationVector3[i]) * resistanceForceVector3[i] * 0.1f + accelerationVector3[i] * 0.1f;
+                    distanceVector3[i] = distanceVector3[i] + speedVector3[i]*0.05f;
+                }//petImageView.getHeight()
+                if(petImageView.getX() - distanceVector3[0] < 0) {
+                    petImageView.setX(0);
+                    distanceVector3[0] = 0;
+                    speedVector3[0] = 0;
+                } else {
+                    if(petImageView.getX() + petImageView.getWidth() - distanceVector3[0] > screenWidth) {
+                        petImageView.setX(screenWidth - petImageView.getWidth());
+                        distanceVector3[0] = 0;
+                        speedVector3[0] = 0;
+                    } else {
+                        petImageView.setX(petImageView.getX() - distanceVector3[0]);
+                    }
+                }
+
+                if(petImageView.getY() + distanceVector3[1] < 0) {
+                    petImageView.setY(0);
+                    distanceVector3[1] = 0;
+                    speedVector3[1] = 0;
+                } else {
+                    if(petImageView.getY() + petImageView.getHeight() + distanceVector3[1] > screenHeight) {
+                        petImageView.setY(screenHeight - petImageView.getHeight());
+                        distanceVector3[1] = 0;
+                        speedVector3[1] = 0;
+                    } else {
+                        petImageView.setY(petImageView.getY() + distanceVector3[1]);
+                    }
+                }
+            }
+        }, 0, 100);
         // pet the pet task timer
 
+        //Sensors
         /**
-         * Notification data
-
-        notificationChannelId = "channel1";
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel= new NotificationChannel(notificationChannelId, notificationChannelId, NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
-        }
-        notificationManagerCompat = NotificationManagerCompat.from(this);*/
+         * Sensor variable initializing
+         */
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        deviceSensors = sensorManager.getSensorList(Sensor.TYPE_ALL);
 
         LoadPrefData();
         RecoverPlayerData();
@@ -387,6 +441,19 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
     /**
      * Save Pref data
      */
@@ -414,6 +481,13 @@ public class MainActivity extends AppCompatActivity {
                 "\nHappiness: " + currentPet.getHappiness() + "/" + currentPet.getMaxHappiness() +
                 "\nSaturation: " + currentPet.getSaturation() + "/" + currentPet.getMaxSaturation();
         statTextView.setText(s);
+    }
+
+    protected void DisplayPhysics() {
+        String s = "Acceleration: " + String.valueOf(accelerationVector3[0]) + ", " + String.valueOf(accelerationVector3[1])+ ", " + String.valueOf(accelerationVector3[2]) +
+                "\nVelocity: " + String.valueOf(speedVector3[0]) +  ", " + String.valueOf(speedVector3[1]) + ", " + String.valueOf(speedVector3[2]) +
+                "\nDistance: " + String.valueOf(distanceVector3[0]) + ", " + String.valueOf(distanceVector3[1]) + ", " +  String.valueOf(distanceVector3[2]);
+        testTextView.setText(s);
     }
 
     /**
@@ -681,6 +755,36 @@ public class MainActivity extends AppCompatActivity {
     protected void SaveToFirebase() {
         playerRef.child("Player Data").setValue(player);
         playerRef.child("Pet Data").setValue(currentPet);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)  {
+            for(int i = 0; i < 3; i++)
+                accelerationVector3[i] = event.values[i]*10f;
+            if(petImageView.getY() == 0 || petImageView.getY() + petImageView.getHeight() == screenHeight)
+                resistanceForceVector3[0] = Math.abs(accelerationVector3[1]) * resistanceK;
+            else
+                resistanceForceVector3[0] = 0;
+            if(petImageView.getX() == 0 || petImageView.getX() + petImageView.getWidth() == screenWidth)
+                resistanceForceVector3[1] = Math.abs(accelerationVector3[0]) * resistanceK;
+            else
+                resistanceForceVector3[1] = 0;
+        }
+        if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE)  {
+            float sum = 0;
+            for(int i = 0; i < event.values.length; i++)
+                sum = sum + event.values[i] * event.values[i];
+            sum = (float) Math.sqrt(sum);
+            if(sum > 10) {
+                //add spin animation and calculations here
+            }
+        }
+        //DisplayPhysics();
+    }
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 
     // Pet touch could probably be implemented in a similar way, different function to overwrite
