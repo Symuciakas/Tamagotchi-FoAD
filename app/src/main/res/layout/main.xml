@@ -7,6 +7,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <pl.droidsonroids.gif.GifImageView
+        android:id="@+id/dead"
+        android:layout_width="418dp"
+        android:layout_height="737dp"
+        android:scaleType="fitXY"
+        android:scaleX="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@drawable/pet_dead" />
+
     <TextView
         android:id="@+id/testTextView"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -16,7 +28,7 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent" />
 
-    <ImageView
+    <pl.droidsonroids.gif.GifImageView
         android:id="@+id/petImageView"
         android:layout_width="266dp"
         android:layout_height="353dp"
@@ -106,6 +118,13 @@
             android:layout_height="match_parent"
             android:layout_margin="10dp"
             android:textSize="25sp" />
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/pet_dead" />
 
     </LinearLayout>
 

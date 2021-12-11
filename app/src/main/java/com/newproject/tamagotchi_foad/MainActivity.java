@@ -84,10 +84,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /**
      * UI elements
      */
-    TextView testTextView, statTextView;
+    TextView testTextView, statTextView, deadNote;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
-    ImageView foodView1, foodView2, petImageView;
+    ImageView foodView1, foodView2, petImageView, backgroundImageView, deadpet;
 
     /**
      * TouchListeners
@@ -175,6 +175,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         foodView1 = findViewById(R.id.foodImageView1);
         foodView2 = findViewById(R.id.foodImageView2);
         petImageView = findViewById(R.id.petImageView);
+        backgroundImageView = findViewById(R.id.Background);
+        deadpet = findViewById(R.id.dead);
+        //deadNote = findViewById(R.id.deathnote);
 
         /**
          * Listener assignments
@@ -196,7 +199,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
         foodView1.setImageResource(R.drawable.food);
-        petImageView.setImageResource(R.drawable.animal1);
+        petImageView.setImageResource(R.drawable.pet_happy);
+        deadpet.setImageResource(R.drawable.pet_dead);
+        deadpet.setVisibility(View.GONE);
+        //deadNote.setText("TEST");
+        //backgroundImageView.setImageResource(R.drawable.background1);
+
+
+        //Feeding the animal
         foodView1.setOnDragListener(new View.OnDragListener() {
             @Override
             public boolean onDrag(View v, DragEvent event) {
@@ -238,6 +248,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             player.addExperience(10);
                             //Food --;
                             DisplayData();
+
+                            //Animation if food is given, animal with eat the food for 2 seconds and then go back to previus animation
+                            petImageView.setImageResource(R.drawable.pet_eating);
+
+                            new java.util.Timer().schedule(
+                                    new java.util.TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            petImageView.setImageResource(R.drawable.pet_happy);
+                                        }
+                                    },
+                                    2000
+                            );
                         }
                         //testTextView.setText(event.getX() + " " + event.getY() + "\n");
                         // Do nothing
@@ -252,12 +275,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 return true;
             }
         });
+
+        //Poking the pet
         ImageView petImg = (ImageView) findViewById(R.id.petImageView);
         petImg.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (currentPet.getHealth() > 0) {
                     currentPet.setHealth(currentPet.getHealth() - 5);
+                    petImageView.setImageResource(R.drawable.pet_sad);
+
+
+
+                    new java.util.Timer().schedule(
+                            new java.util.TimerTask() {
+                                @Override
+                                public void run() {
+                                    petImageView.setImageResource(R.drawable.pet_happy);
+                                }
+                            },
+                            500
+                    );
+
                     DisplayData();
+                    checkAlive();
                 }
             }
         });
@@ -267,6 +307,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     // start your timer
+                        petImageView.setImageResource(R.drawable.pet_petted);
                         happinessIncreaseTimer = new Timer();
                         happinessIncreaseTimer.scheduleAtFixedRate(new TimerTask() {
                             @Override
@@ -278,6 +319,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
                     // stop your timer.
                     happinessIncreaseTimer.cancel();
+                    petImageView.setImageResource(R.drawable.pet_happy);
                 }
                 return false;
             }
@@ -413,6 +455,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         CheckDate();
     }
 
+    public void checkAlive() {
+        if (currentPet.getHealth() < 1){
+            petImageView.setVisibility(View.GONE);
+            deadpet.setVisibility(View.VISIBLE);
+        }
+    }
+
     @Override
     protected void onStop() {
         SavePrefData();
@@ -446,6 +495,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE), SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -777,7 +828,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 sum = sum + event.values[i] * event.values[i];
             sum = (float) Math.sqrt(sum);
             if(sum > 10) {
-                //add spin animation and calculations here
+                petImageView.setImageResource(R.drawable.pet_dizzy);
+            }
+        }
+
+        if(event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE)  {
+            /*float sum = 0;
+            for(int i = 0; i < event.values.length; i++)
+                sum = sum + event.values[0] * event.values[i];
+            sum = (float) Math.sqrt(sum);
+            */
+            float temparature = event.values[0];
+            if(temparature < 10) {
+                petImageView.setImageResource(R.drawable.pet_cold);
+            }
+        }
+
+        if(event.sensor.getType() == Sensor.TYPE_LIGHT)  {
+            float lux = event.values[0];
+            if(lux < 100) {
+                petImageView.setImageResource(R.drawable.pet_sleep);
             }
         }
         //DisplayPhysics();
