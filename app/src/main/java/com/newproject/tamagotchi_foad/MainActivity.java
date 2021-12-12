@@ -64,15 +64,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final String SHARED_PREFERENCES = "sharedPreferences";// General app code
     public static final String LAST_TIME_ACTIVE = "lastTimeActive";// Time when user last exited the app
     public static final String NOTIFICATION_ID = "notificationID";
+    public static final String LAST_PET_INDEX = "lastPetIndex";
+    public Long lastPetIndex = Long.valueOf(0);
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
 
     /**
      * Firebase data
      */
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference playersRef = database.getReference("players");
-    DatabaseReference playerRef = playersRef.child("01");
+    //FirebaseDatabase database = FirebaseDatabase.getInstance();
+    //DatabaseReference playersRef = database.getReference("players");
+    //DatabaseReference playerRef = playersRef.child("01");
 
     /**
      * Local Room Database elements
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView testTextView, statTextView, deadNote;
     ConstraintLayout mainLayout;
     LinearLayout foodLayout, statLayout;
-    ImageView foodView1, foodView2, petImageView, backgroundImageView, deadpet;
+    ImageView foodView1, foodView2, foodView3, foodView4, petImageView, backgroundImageView, deadpet;
 
     /**
      * TouchListeners
@@ -119,7 +121,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int notificationId = 0;
     private String notificationChannelId;
 
-    //Sensors
     /**
      * Sensor variable declaration
      */
@@ -175,6 +176,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         statTextView = findViewById(R.id.statTextView);
         foodView1 = findViewById(R.id.foodImageView1);
         foodView2 = findViewById(R.id.foodImageView2);
+        foodView3 = findViewById(R.id.foodImageView3);
+        foodView4 = findViewById(R.id.foodImageView4);
         petImageView = findViewById(R.id.petImageView);
         backgroundImageView = findViewById(R.id.Background);
         deadpet = findViewById(R.id.dead);
@@ -200,12 +203,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
         foodView1.setImageResource(R.drawable.food);
+        foodView3.setImageResource(R.drawable.abc_vector_test);
+        foodView4.setImageResource(R.drawable.abc_vector_test);
         petImageView.setImageResource(R.drawable.pet_happy);
         deadpet.setImageResource(R.drawable.pet_dead);
         deadpet.setVisibility(View.GONE);
         //deadNote.setText("TEST");
         //backgroundImageView.setImageResource(R.drawable.background1);
-
 
         //Feeding the animal
         foodView1.setOnDragListener(new View.OnDragListener() {
@@ -276,6 +280,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 return true;
             }
         });
+        foodView3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                lastPetIndex--;
+                if(lastPetIndex == -1)
+                    lastPetIndex = Long.valueOf(roomDB.petDAO().getAll().size()-1);
+                roomDB.petDAO().update(currentPet.getUid(), currentPet.getLevel(), currentPet.getExperience(), currentPet.getAffection(), currentPet.getHealth(), currentPet.getHappiness(), currentPet.getSaturation());
+                currentPet = roomDB.petDAO().getAll().get(Math.toIntExact(lastPetIndex));
+                DisplayData();
+            }
+        });
+        foodView4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                lastPetIndex = (lastPetIndex+1)%roomDB.petDAO().getAll().size();
+                roomDB.petDAO().update(currentPet.getUid(), currentPet.getLevel(), currentPet.getExperience(), currentPet.getAffection(), currentPet.getHealth(), currentPet.getHappiness(), currentPet.getSaturation());
+                currentPet = roomDB.petDAO().getAll().get(Math.toIntExact(lastPetIndex));
+                DisplayData();
+            }
+        });
 
         //Poking the pet
         ImageView petImg = (ImageView) findViewById(R.id.petImageView);
@@ -313,7 +337,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         happinessIncreaseTimer.scheduleAtFixedRate(new TimerTask() {
                             @Override
                             public void run() {
-                                currentPet.setHappiness(currentPet.getHappiness() - 1);
+                                currentPet.setHappiness(currentPet.getHappiness() + 1);
+                                player.addExperience(1);
+                                player.givePats();
                                 DisplayData();
                             }
                         }, 2000, 3000);
@@ -325,6 +351,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 return false;
             }
         });
+
         /**
          * Shared preference initializing
          */
@@ -426,7 +453,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         petImageView.setX(petImageView.getX() - distanceVector3[0]);
                     }
                 }
-
                 if(petImageView.getY() + distanceVector3[1] < 0) {
                     petImageView.setY(0);
                     distanceVector3[1] = 0;
@@ -470,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         roomDB.playerDAO().update(player.getUid(), player.getPlayerName(), player.getLevel(), player.getExperience(), player.getScore(), player.getPlayTime(), player.getPatsGiven(), player.getFoodFed());
         roomDB.petDAO().update(currentPet.getUid(), currentPet.getLevel(), currentPet.getExperience(), currentPet.getAffection(), currentPet.getHealth(), currentPet.getHappiness(), currentPet.getSaturation());
 
-        SaveToFirebase();
+        //SaveToFirebase();
 
         Intent notificationServiceIntent = new Intent(mainContext, NotificationService.class);
 
@@ -513,6 +539,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String currentDateAndTime = sdf.format(new Date());
         editor.putString(LAST_TIME_ACTIVE, currentDateAndTime);
+        editor.putLong(LAST_PET_INDEX, lastPetIndex);
         //editor.putInt(NOTIFICATION_ID, notificationId);
         editor.commit();
     }
@@ -521,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
      * Update pet stat textView
      */
     protected void DisplayData() {
-        SaveToFirebase();
+        //SaveToFirebase();
         String s = player.getUid() + player.getPlayerName() +
                 "\n" + player.getLevel() + " " + player.getExperience() +
                 "/100\n" + player.getPlayTime() + "sec.\n" +
@@ -533,6 +560,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 "\nHappiness: " + currentPet.getHappiness() + "/" + currentPet.getMaxHappiness() +
                 "\nSaturation: " + currentPet.getSaturation() + "/" + currentPet.getMaxSaturation();
         statTextView.setText(s);
+
+        testTextView.setText(String.valueOf(roomDB.playerDAO().getAll().size()) + " " + String.valueOf(roomDB.petDataDAO().getAll().size()) + " " + String.valueOf(roomDB.petDAO().getAll().size()));
     }
 
     protected void DisplayPhysics() {
@@ -740,7 +769,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     protected void RecoverPlayerData() {
-        playerRef.child("Player Data").addValueEventListener(new ValueEventListener() {
+        /*playerRef.child("Player Data").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 player = dataSnapshot.getValue(Player.class);
@@ -760,7 +789,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 // Failed to read value
             }
         });
-
+        */
         if(roomDB.playerDAO().getAll().size() == 0) {
             if(player == null) {
                 /**
@@ -773,11 +802,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 /**
                  * Default pet data initializing
                  */
-                petData.add(new PetData(0, "None", 100, -1, 100, 300000, 50, 7200000, 100, 300000));
+                petData.add(new PetData(0, "One pet", 100, -1, 100, 300000, 50, 7200000, 100, 300000));
+                petData.add(new PetData(1, "Other Pet", 10, 300000, 100, 300000, 30, 300000, 50, 150000));
                 roomDB.petDataDAO().insert(petData.get(0));
+                roomDB.petDataDAO().insert(petData.get(1));
                 currentPet = new Pet(petData.get(0));
                 roomDB.petDAO().insert(currentPet);
-
+                roomDB.petDAO().insert(new Pet(petData.get(1)));
             }
         } else {
             /**
@@ -785,9 +816,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
              */
             player = roomDB.playerDAO().getAll().get(0);
             petData = roomDB.petDataDAO().getAll();
-            currentPet = roomDB.petDAO().getAll().get(0);
+            currentPet = roomDB.petDAO().getAll().get(Math.toIntExact(lastPetIndex));
         }
-        SaveToFirebase();
+        //SaveToFirebase();
     }
 
     protected void ResetPlayerData() {
@@ -802,11 +833,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void LoadPrefData() {
         notificationId = sharedPreferences.getInt(NOTIFICATION_ID, 0);
+        lastPetIndex = sharedPreferences.getLong(LAST_PET_INDEX, 0);
     }
 
     protected void SaveToFirebase() {
-        playerRef.child("Player Data").setValue(player);
-        playerRef.child("Pet Data").setValue(currentPet);
+        //playerRef.child("Player Data").setValue(player);
+        //playerRef.child("Pet Data").setValue(currentPet);
     }
 
     @Override
