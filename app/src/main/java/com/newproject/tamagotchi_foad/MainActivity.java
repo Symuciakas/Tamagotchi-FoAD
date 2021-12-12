@@ -10,6 +10,7 @@ import android.content.ClipDescription;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -838,17 +839,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 sum = sum + event.values[0] * event.values[i];
             sum = (float) Math.sqrt(sum);
             */
-            float temparature = event.values[0];
-            if(temparature < 10) {
+            float temperature = event.values[0];
+            if(temperature < 10) {
                 petImageView.setImageResource(R.drawable.pet_cold);
+            }
+            else if(temperature > 10){
+                petImageView.setImageResource(R.drawable.pet_happy);
             }
         }
 
         if(event.sensor.getType() == Sensor.TYPE_LIGHT)  {
-            float lux = event.values[0];
-            if(lux < 100) {
+            Calendar rightNow = Calendar.getInstance();
+            String currentHour = String.valueOf(rightNow.get(Calendar.HOUR_OF_DAY));
+            int currentLux = (int) event.values[0];
+            if (currentLux <= 100 && (rightNow.get(Calendar.HOUR_OF_DAY) > 20 || rightNow.get(Calendar.HOUR_OF_DAY) < 7)) {
+                mainLayout.setBackgroundColor(Color.parseColor("#191970"));
                 petImageView.setImageResource(R.drawable.pet_sleep);
             }
+            else if(currentLux > 100){
+                mainLayout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                petImageView.setImageResource(R.drawable.pet_happy);
+            }
+            //testTextView.setText(currentHour);
         }
         //DisplayPhysics();
     }
